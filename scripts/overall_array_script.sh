@@ -14,7 +14,7 @@ module load blast/2.13.0
 #choose the fastq file to work on
 FWD_FQ=`awk "NR==$SLURM_ARRAY_TASK_ID" ./config_files/fasta_list`
 OUTPUT=`awk "NR==$SLURM_ARRAY_TASK_ID" ./config_files/output`
-REF_DB="./reference_genome/GCF_000017985.1_ASM1798v1_genomic.fna"
+REF_DB="./reference_genome/LAS.fixed.fasta"
 CONTIG=`awk "NR==$SLURM_ARRAY_TASK_ID" ./config_files/contig_list`
 GLEN=`awk "NR==$SLURM_ARRAY_TASK_ID" ./config_files/glen_list`
 GFF=`awk "NR==$SLURM_ARRAY_TASK_ID" ./config_files/gff_list`
