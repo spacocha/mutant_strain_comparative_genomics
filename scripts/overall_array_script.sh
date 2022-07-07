@@ -38,6 +38,10 @@ blastn -query ${RESDIR}/${OUTPUT}.RC.fasta -db $REF_DB -out ${RESDIR}/${OUTPUT}.
 echo "Fix orientation with perl script"
 perl ./scripts/fix_circular_fasta_wblast.pl ${FADIR}/${FWD_FQ} ${RESDIR}/${OUTPUT}.RC.fasta ${RESDIR}/${OUTPUT}.blast.txt ${RESDIR}/${OUTPUT}.RC.blast.txt ${GFFDIR}/$GFF $GLEN ${RESDIR}/${OUTPUT}.fixed
 
+echo "Fix gff and fasta"
+samtools faidx ${OUTPUT}.fixed.fasta $CONTIG > ${OUTPUT}.fixed.final.fasta
+perl scripts/reorder_gff_files.pl results/${OUTPUT}.fixed.gff3 results/${OUTPUT}.fixed.final.fasta > results/${OUTPUT}.fixed.final.gff3
+
 echo "Final blast"
 blastn -query ${RESDIR}/${OUTPUT}.fixed.fasta -db $REF_DB -out ${RESDIR}/${OUTPUT}.fixed.blast.txt -outfmt 6
 
