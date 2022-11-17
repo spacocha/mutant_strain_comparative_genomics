@@ -3,52 +3,44 @@
 #	Use this program to make tab files for FileMaker
 #
 
-	die "Use this program to fix the orientation of the gff3 files
-Use the output from fix_circulate_fasta_wblast.pl gff3 file and the fasta fixed file
-Usage: fixed_gff3_file fixed_fasta \n" unless (@ARGV);
+	die "Use this program to find the closest gene to a position in the query
+Usage: query.final.fixed.gff3_file snp_file \n" unless (@ARGV);
 	
 chomp (@ARGV);
 #add back the missing first line
-print "##gff-version 3\n";
 
-($gffile, $fafile) = (@ARGV);
+($gffile, $snpfile) = (@ARGV);
 
-#Set up the order for each element
-$regionhash{"region"}=1;
-$regionhash{"gene"}=2;
-$regionhash{"mRNA"}=3;
-$regionhash{"tRNA"}=4;
-$regionhash{"rRNA"}=5;
-$regionhash{"tmRNA"}=6;
-$regionhash{"CDS"}=7;
-$regionhash{"exon"}=8;
-$regionhash{"polypeptide"}=9;
+open (IN, "<$snpfile") or die "Can't open $snpfile\n";
+while ($line1 = <IN>){
+        chomp ($line1);
+        next unless ($line1);
+	($refpos, $refbase, $qbase, $qposition, $buff, $dist, $R, $Q, $rlen, $qlen, $refcontig, $qcontig)=split("\t", $line1);
+	$hash{$qposition}++;
+}
+close (IN);
 
 open (IN, "<$gffile") or die "Can't open $gffile\n";
 while ($line1 = <IN>){
 	chomp ($line1);
 	next unless ($line1);
 	($contig, $period, $region, $start, $stop, $period2, $plusminus, $period3, $ID)=split ("\t", $line1);
+	#see if it is within the gene
 	if ($ID){
-		if ($hash{$start}{$stop}{$region}){
-			die "Already has this region $line $hash{$start}{$stop}{$region}\n";
-		} else {
-			$hash{$start}{$stop}{$region}=$line1;
-			die "Missing this $region\n" unless ($regionhash{$region});		
-		}
-	}
-	
-}
-close (IN);
-
-foreach $start (sort {$a <=> $b} keys %hash){
-	foreach $stop (sort {$b <=> $a} keys %{$hash{$start}}){
-		foreach $region (sort {$regionhash{$a} <=> $regionhash{$b}} keys %regionhash){
-			if ($hash{$start}{$stop}{$region}){
-				print "$hash{$start}{$stop}{$region}\n";
+		next if ($region eq "region");
+		foreach $position (sort keys %hash){
+			if ($position >= $start && $position <= $stop){
+				print "Query SNP position $position within gene: $line1\n";
+				$printed{$position}++;
 			}
 		}
 	}
 }
 
+close (IN);
+
+foreach $position (sort keys %hash){
+	print "No feature found for Query SNP position $position\n" unless ($printed{$position});
+	
+}
 

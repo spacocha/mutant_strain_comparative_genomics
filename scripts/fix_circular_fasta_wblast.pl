@@ -81,32 +81,54 @@ while ($line1 = <IN>){
 		#die "Missing $contig $period $type $start $stop $period2 $plusminus $period3 $ID\n" unless ($ID);
 		#just print out anything missing ID, since it's probably the end sequence (although it would have to be the RC!
 		if ($ID){
-			$newstart_tmp = $glength - $start + 1;
-			$newstop_tmp = $glength - $stop + 1;
-			if ($orient eq "reverse_comp"){
-				#These need to be reverse complemented and shifted
-				#print "$ID\n";
-				#rc formula
-				#die "Oldstart $start Old stop $stop Newstart $newstart newstop $newstop $ID\n" if ($ID =~/ArcA/);
-				if ($newstart_tmp > $newstop_tmp){
-					$newstart=$newstop_tmp;
-					$newstop=$newstart_tmp;
-				} else {
-					$newstart=$newstart_tmp;
-					$newstop=$newstop_tmp;
+			if ($type eq "region"){
+				#This just designates the whole contig so print as is
+				print OUT "$contig\t$period\t$type\t$newstart\t$newstop\t$period2\t$plusminus\t$period3\t$ID\n";
+			} else {
+				if ($orient eq "forward"){
+					$diff=$glength - $cutpoint;
+					#if the start and stop are both before the cut point, they should be shifted by the amount that was moved
+					if ($start < $cutpoint && $stop < $cutpoint){
+						#Both are before cutpoint so shift by cut amount
+						$newstart = $start + $diff + 1;
+						$newstop = $stop + $diff + 1;
+					} elsif ($start > $cutpoint && $stop > $cutpoint){
+						#Both are after cutpoint, so substract cut amount
+						$newstart = $start - $cutpoint + 1;
+						$newstop = $stop - $cutpoint + 1;
+					} else {
+						die "Start and stop overlap or equal cutpoint $ID $start $stop $cutpoint\n";
+					}
+				} elsif ($orient eq "reverse_comp"){
+					#These need to be reverse complemented and shifted
+					#Start by reversing the order
+					$newstart_tmp= $glength - $stop + 1;
+					$newstop_tmp= $glength - $start + 1;
+					#next change by the cutpoint or diff
+					$diff= $glength - $cutpoint;
+					if ($newstart_tmp < $cutpoint && $newstart_tmp < $cutpoint){
+						$newstart=$newstart_tmp + $diff + 1;
+						$newstop = $newstop_tmp + $diff + 1;
+					} elsif ($newstart_tmp > $cutpoint && $newstart_tmp > $cutpoint){
+						$newstart=$newstart_tmp - $cutpoint +1;
+						$newstop = $newstop_tmp - $cutpoint +1;
+					}
+					#print "$ID\n";
+					#rc formula
+					#die "Oldstart $start Old stop $stop Newstart $newstart newstop $newstop $ID\n" if ($ID =~/ArcA/);
 				}
 				print OUT "$contig\t$period\t$type\t$newstart\t$newstop\t$period2\t";
-				if ($plusminus eq "+"){
-					print OUT "-";
+				if ($orient eq "reverse_comp"){
+					if ($plusminus eq "+"){
+						print OUT "-";
+					} else {
+						print OUT "+";
+					}
 				} else {
-					print OUT "+";
+					print OUT "$plusminus";
 				}
 				print OUT "\t$period3\t$ID\n";
-
-			} else {
-				#Just need to shift by specific number of bases
-				print OUT "$contig\t$period\t$type\t${newstart_tmp}\t${newstop_tmp}\t$period2\t$plusminus\t$period3\t$ID\n";
-			}
+			}	
 		}
 	}
 }
